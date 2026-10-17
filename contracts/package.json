@@ -1,0 +1,18 @@
+{
+  "name": "@pot-watch/contracts",
+  "version": "0.1.0",
+  "description": "AlertRegistry smart contract for POT Watch — Portaldot Network V3.0 EVM",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.ts --network portaldot_local",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network portaldot_testnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}
