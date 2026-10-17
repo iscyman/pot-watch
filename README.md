@@ -20,10 +20,18 @@ Built for the **Portaldot Hacker House 2026** — Node Operations & Tooling trac
 
 ## Chain facts (verified against live RPC)
 
-- Mainnet WS: `wss://mainnet.portaldot.io` (BABE consensus, ~6s blocks)
-- Token: `POT` — **14 decimals**, ss58 format 42
-- Validator set: 10 validators (`Session::Validators`)
-- Key state decoded: block height, active/current era, session index, total issuance
+| | Mainnet | V3 Testnet (hackathon) |
+|---|---|---|
+| Substrate WS | `wss://mainnet.portaldot.io` | `wss://test-node-v3.portaldot.dev` |
+| EVM JSON-RPC | — | `https://test-evm-rpc-v3.portaldot.dev` (chain ID 420420777) |
+| Chain | Portaldot Mainnet | PortaldotV3 Test (specName `portaldot-v3`, specVersion 3002) |
+| Token | POT (14 dec, ss58 42) | tPOT (14 dec, ss58 42) |
+| Consensus | BABE, ~6s blocks | BABE |
+| Validators | 10 | 2 |
+| Explorer | — | https://node-console.portaldot.dev |
+
+Key state decoded live from both networks: block height, active/current era,
+session index, validator set, total issuance.
 
 ## Architecture
 
@@ -46,7 +54,7 @@ docs/           → roadmap, runbooks
 
 ## Status
 
-🚧 Active development — day 1 of the Hacker House build period (Oct 14 – Nov 6, 2026).
+🚧 Active development of the Hacker House build period (Oct 14 – Nov 6, 2026).
 
 ## License
 

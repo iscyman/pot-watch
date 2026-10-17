@@ -43,13 +43,16 @@
 
 ## 2. Verified chain facts
 
-| Fact | Value |
-|---|---|
-| Mainnet RPC | `wss://mainnet.portaldot.io` — reachable, verified |
-| Consensus | BABE, ~6s block time |
-| Token | POT, 14 decimals, ss58 format 42 |
-| Validator set | 10 validators (decoded live from `Session::Validators`) |
-| Local node | `portaldot_dev` v2.0.0 boots `--dev`, imports + finalizes blocks |
+| Fact | Mainnet | V3 Testnet |
+|---|---|---|
+| Substrate WS RPC | `wss://mainnet.portaldot.io` ✅ | `wss://test-node-v3.portaldot.dev` ✅ |
+| EVM JSON-RPC | — | `https://test-evm-rpc-v3.portaldot.dev` ✅ (chain ID 420420777) |
+| Chain / spec | Portaldot Mainnet | PortaldotV3 Test · specName `portaldot-v3` · specVersion 3002 |
+| Consensus | BABE, ~6s blocks | BABE |
+| Token | POT, 14 decimals, ss58 42 | tPOT, 14 decimals, ss58 42 |
+| Validators | 10 | 2 |
+| Explorer | — | https://node-console.portaldot.dev |
+| Local node | `portaldot_dev` v2.0.0 boots `--dev` (no EVM — V2 build) | — |
 
 ### Storage keys verified working
 - `Session::Validators` → Vec<AccountId> (authoritative validator set)
