@@ -1,0 +1,12 @@
+{
+  "rpcUrl": "wss://mainnet.portaldot.io",
+  "testnetRpcUrl": "wss://test-node-v3.portaldot.dev",
+  "dataDir": "./data",
+  "discordWebhook": null,
+  "blockTimeTargetS": 6,
+  "alerts": [
+    { "kind": "era_rotation", "enabled": true },
+    { "kind": "validator_inactive", "window": 90, "enabled": true },
+    { "kind": "finality_lag", "threshold": 5, "enabled": true }
+  ]
+}
