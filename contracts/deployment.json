@@ -1,0 +1,427 @@
+{
+  "network": "portaldot_v3_testnet",
+  "chain": "PortaldotV3 Test",
+  "specVersion": 3002,
+  "wsEndpoint": "wss://test-node-v3.portaldot.dev",
+  "evmRpc": "https://test-evm-rpc-v3.portaldot.dev",
+  "evmChainId": 420420777,
+  "explorer": {
+    "block": "https://node-console.portaldot.dev/#/explorer/query/0x83d9687785f9ebc481bf713d0d52d6c4b5e9d957871bae5a7fd8b1f58fba25a3"
+  },
+  "deployedAtUtc": "2026-10-21T15:12:23.876Z",
+  "deployer": {
+    "native": {
+      "address": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+      "type": "sr25519",
+      "role": "native deployer (Revive.instantiate_with_code)"
+    },
+    "evm": {
+      "address": "0x8D2988e34CB0Ad222435d9992d35f39F9144d6fC",
+      "role": "EVM surface wallet (reads + optional EVM writes)"
+    }
+  },
+  "contract": {
+    "name": "AlertRegistry",
+    "solidity": "0.8.24",
+    "evmVersion": "london",
+    "optimizer": "200 runs",
+    "address": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+    "deployTxHash": "0xcbf48e01dd166a0fd73b08942718049c87444652c82ad4cc11b7899f020fd8d3",
+    "blockNumber": 133258,
+    "blockHash": "0x83d9687785f9ebc481bf713d0d52d6c4b5e9d957871bae5a7fd8b1f58fba25a3",
+    "events": [
+      {
+        "event": "balances.Withdraw",
+        "data": {
+          "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+          "amount": "35,972,260,796,374"
+        }
+      },
+      {
+        "event": "system.NewAccount",
+        "data": {
+          "account": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY"
+        }
+      },
+      {
+        "event": "balances.Endowed",
+        "data": {
+          "account": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+          "freeBalance": "10,000,000,000,000"
+        }
+      },
+      {
+        "event": "balances.Minted",
+        "data": {
+          "who": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+          "amount": "10,000,000,000,000"
+        }
+      },
+      {
+        "event": "balances.TransferAndHold",
+        "data": {
+          "reason": {
+            "Revive": "CodeUploadDepositReserve"
+          },
+          "source": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+          "dest": "5EYCAe5ijiYfhaAUBd6H9WGRTsvwFFc7GnhQkiHvBYxdvpbV",
+          "transferred": "20,994,000,000,000,000"
+        }
+      },
+      {
+        "event": "revive.Instantiated",
+        "data": {
+          "deployer": "0x6920ecef4a2edbc6be94f0572b19bccf0f13cfe5",
+          "contract": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d"
+        }
+      },
+      {
+        "event": "balances.TransferAndHold",
+        "data": {
+          "reason": {
+            "Revive": "StorageDepositReserve"
+          },
+          "source": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+          "dest": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+          "transferred": "7,447,350,000,000,000"
+        }
+      },
+      {
+        "event": "balances.Deposit",
+        "data": {
+          "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+          "amount": "964,170,348"
+        }
+      },
+      {
+        "event": "balances.Deposit",
+        "data": {
+          "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+          "amount": "35,971,296,626,026"
+        }
+      },
+      {
+        "event": "transactionPayment.TransactionFeePaid",
+        "data": {
+          "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+          "actualFee": "35,971,296,626,026",
+          "tip": "0"
+        }
+      },
+      {
+        "event": "system.ExtrinsicSuccess",
+        "data": {
+          "dispatchInfo": {
+            "weight": {
+              "refTime": "1,766,473,944",
+              "proofSize": "29,264"
+            },
+            "class": "Normal",
+            "paysFee": "Yes"
+          }
+        }
+      }
+    ],
+    "feeTPot": 0.35972260796374,
+    "weightLimit": {
+      "refTime": "1518016444",
+      "proofSize": "42019"
+    },
+    "storageDepositLimitTPot": 287.757635,
+    "evmVisible": {
+      "eth_getCodeBytes": 3429
+    }
+  },
+  "steps": [
+    {
+      "step": "map_account",
+      "txHash": "0x04969e168397f3486c2aa84dbe7e73fc263ae129085f30073599c0aad88fafdf"
+    }
+  ],
+  "mappedH160": "0x6920ecef4a2edbc6be94f0572b19bccf0f13cfe5",
+  "balances": {
+    "beforeTPot": 400,
+    "afterTPot": {
+      "free": 115.21588000841567,
+      "reserved": 0
+    }
+  },
+  "interactions": [
+    {
+      "label": "registerAlert #1 (ValidatorUptime\u2192Discord, 9000 bps)",
+      "when": "2026-10-21T15:18:16.948Z",
+      "data": "0xd042b3df0000000000000000000000000000000000000000000000000000000000000000849a279f6c2ad8f0a66953cb89bdeff513b1a4ded437e41cb7dbd69726176b0c00000000000000000000000000000000000000000000000000000000000023280000000000000000000000000000000000000000000000000000000000000000",
+      "txHash": "0x0fedf0f6994f333df8040da567d865a2f835ee638a2b5bca3f53f54505060814",
+      "blockHash": "0xfff4131f291442c1252cee0d5e4459ad6a5561b894d3b7e1e2327242c7a9bd3f",
+      "events": [
+        {
+          "event": "balances.Withdraw",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "2,812,888,879,913"
+          }
+        },
+        {
+          "event": "revive.ContractEmitted",
+          "data": {
+            "contract": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+            "data": "0x0000000000000000000000000000000000000000000000000000000000000000849a279f6c2ad8f0a66953cb89bdeff513b1a4ded437e41cb7dbd69726176b0c00000000000000000000000000000000000000000000000000000000000023280000000000000000000000000000000000000000000000000000000000000000",
+            "topics": [
+              "0x250ba6145e6d92c11eb206cf3ad2d0a9df564da38be76ff6b9ea1d77695edf85",
+              "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "0x0000000000000000000000006920ecef4a2edbc6be94f0572b19bccf0f13cfe5"
+            ]
+          }
+        },
+        {
+          "event": "balances.TransferAndHold",
+          "data": {
+            "reason": {
+              "Revive": "StorageDepositReserve"
+            },
+            "source": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "dest": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+            "transferred": "2,304,900,000,000,000"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "1,165,998,407"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+            "amount": "2,811,722,881,506"
+          }
+        },
+        {
+          "event": "transactionPayment.TransactionFeePaid",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "actualFee": "2,811,722,881,506",
+            "tip": "0"
+          }
+        },
+        {
+          "event": "system.ExtrinsicSuccess",
+          "data": {
+            "dispatchInfo": {
+              "weight": {
+                "refTime": "2,361,571,455",
+                "proofSize": "95,169"
+              },
+              "class": "Normal",
+              "paysFee": "Yes"
+            }
+          }
+        }
+      ],
+      "blockNumber": 133316,
+      "success": true
+    },
+    {
+      "label": "registerAlert #2 (EraRotation\u2192Telegram)",
+      "when": "2026-10-21T15:18:50.070Z",
+      "data": "0xd042b3df0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+      "txHash": "0x38b85ab440ce8c7942ddd0c77b8874037c1cd91c8f9215c49c9aca504ba42c39",
+      "blockHash": "0xb1529dd4b349a0ad6cb02b812d6fa039bc41885ffcbf26254754fffe437431c2",
+      "events": [
+        {
+          "event": "balances.Withdraw",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "2,812,888,920,797"
+          }
+        },
+        {
+          "event": "revive.ContractEmitted",
+          "data": {
+            "contract": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+            "data": "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+            "topics": [
+              "0x250ba6145e6d92c11eb206cf3ad2d0a9df564da38be76ff6b9ea1d77695edf85",
+              "0x0000000000000000000000000000000000000000000000000000000000000002",
+              "0x0000000000000000000000006920ecef4a2edbc6be94f0572b19bccf0f13cfe5"
+            ]
+          }
+        },
+        {
+          "event": "balances.TransferAndHold",
+          "data": {
+            "reason": {
+              "Revive": "StorageDepositReserve"
+            },
+            "source": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "dest": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+            "transferred": "1,152,450,000,000,000"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "1,166,010,244"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+            "amount": "2,811,722,910,553"
+          }
+        },
+        {
+          "event": "transactionPayment.TransactionFeePaid",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "actualFee": "2,811,722,910,553",
+            "tip": "0"
+          }
+        },
+        {
+          "event": "system.ExtrinsicSuccess",
+          "data": {
+            "dispatchInfo": {
+              "weight": {
+                "refTime": "2,361,628,863",
+                "proofSize": "95,233"
+              },
+              "class": "Normal",
+              "paysFee": "Yes"
+            }
+          }
+        }
+      ],
+      "blockNumber": 133319,
+      "success": true
+    },
+    {
+      "label": "recordFire #1",
+      "when": "2026-10-21T15:19:07.418Z",
+      "data": "0x2cabcf780000000000000000000000000000000000000000000000000000000000000001",
+      "txHash": "0x39b60c92f4fe2566e7d58771da48af7f73b4a19625dabe72977695b3531e84ad",
+      "blockHash": "0x25f41a72e9f23f270ca385189894c82a3668acdc066f068b14673612fdf6b335",
+      "events": [
+        {
+          "event": "balances.Withdraw",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "1,842,052,901,242"
+          }
+        },
+        {
+          "event": "revive.ContractEmitted",
+          "data": {
+            "contract": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+            "data": "0x00000000000000000000000000000000000000000000000000000000000208ca",
+            "topics": [
+              "0x27d9e20229c1cfc053b1e26adedd12438ee3d610855454ae152ebf56f8dc1238",
+              "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "0x0000000000000000000000006920ecef4a2edbc6be94f0572b19bccf0f13cfe5"
+            ]
+          }
+        },
+        {
+          "event": "balances.TransferAndHold",
+          "data": {
+            "reason": {
+              "Revive": "StorageDepositReserve"
+            },
+            "source": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "dest": "5HNgC9qbjPH4CUr2SaWVUYkHQrJj47iGBqVpREtnrdLd38zY",
+            "transferred": "384,150,000,000,000"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "amount": "887,335,269"
+          }
+        },
+        {
+          "event": "balances.Deposit",
+          "data": {
+            "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+            "amount": "1,841,165,565,973"
+          }
+        },
+        {
+          "event": "transactionPayment.TransactionFeePaid",
+          "data": {
+            "who": "5FWLjJ3tX3FYHaj3AX1BvwfivBchcrPJiigFy1vfmqRU26Jb",
+            "actualFee": "1,841,165,565,973",
+            "tip": "0"
+          }
+        },
+        {
+          "event": "system.ExtrinsicSuccess",
+          "data": {
+            "dispatchInfo": {
+              "weight": {
+                "refTime": "1,583,836,807",
+                "proofSize": "54,173"
+              },
+              "class": "Normal",
+              "paysFee": "Yes"
+            }
+          }
+        }
+      ],
+      "blockNumber": 133322,
+      "success": true
+    }
+  ],
+  "evmSurfaceCheck": {
+    "when": "2026-10-21T15:19:28.083Z",
+    "activeAlertCount": "2",
+    "alert1": "0x6920eceF4a2eDbC6be94f0572b19bCcf0f13Cfe5,0,0x849a279f6c2ad8f0a66953cb89bdeff513b1a4ded437e41cb7dbd69726176b0c,9000,0,true,1792595916,1792595952,1",
+    "logs": []
+  },
+  "solidityEventsDecodedFromNative": [
+    {
+      "source": "native revive.ContractEmitted -> ethers.Interface.parseLog",
+      "txHash": "0x0fedf0f6994f333df8040da567d865a2f835ee638a2b5bca3f53f54505060814",
+      "blockNumber": 133316,
+      "solidityEvent": "AlertRegistered",
+      "args": {
+        "id": "1",
+        "owner": "0x6920eceF4a2eDbC6be94f0572b19bCcf0f13Cfe5",
+        "kind": "0",
+        "target": "0x849a279f6c2ad8f0a66953cb89bdeff513b1a4ded437e41cb7dbd69726176b0c",
+        "threshold": "9000",
+        "channel": "0"
+      }
+    },
+    {
+      "source": "native revive.ContractEmitted -> ethers.Interface.parseLog",
+      "txHash": "0x38b85ab440ce8c7942ddd0c77b8874037c1cd91c8f9215c49c9aca504ba42c39",
+      "blockNumber": 133319,
+      "solidityEvent": "AlertRegistered",
+      "args": {
+        "id": "2",
+        "owner": "0x6920eceF4a2eDbC6be94f0572b19bCcf0f13Cfe5",
+        "kind": "1",
+        "target": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "threshold": "0",
+        "channel": "1"
+      }
+    },
+    {
+      "source": "native revive.ContractEmitted -> ethers.Interface.parseLog",
+      "txHash": "0x39b60c92f4fe2566e7d58771da48af7f73b4a19625dabe72977695b3531e84ad",
+      "blockNumber": 133322,
+      "solidityEvent": "AlertFired",
+      "args": {
+        "id": "1",
+        "watcher": "0x6920eceF4a2eDbC6be94f0572b19bCcf0f13Cfe5",
+        "blockNumber": "133322"
+      }
+    }
+  ],
+  "evmSurfaceNotes": "eth_call reads work from any Ethereum tooling (verified: activeAlertCount, getAlert). eth_getLogs/receipts do NOT index native-surface writes on spec 3002 \u2014 event ingestion uses Substrate WS revive.ContractEmitted (captured in interactions[].events), which decodes to standard Solidity events (see solidityEventsDecodedFromNative)."
+}

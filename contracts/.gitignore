@@ -5,4 +5,4 @@ typechain-types/
 .env
 coverage/
 coverage.json
-deployment.json
+native-wallet.json

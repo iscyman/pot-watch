@@ -12,7 +12,9 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(`Network:  ${network.name}`);
   console.log(`Deployer: ${deployer.address}`);
-  console.log(`Balance:  ${ethers.formatEther(await ethers.provider.getBalance(deployer.address))}`);
+  // NOTE: on Portaldot V3 the eth surface is 18-decimal (nativeToEthRatio=10000 × the
+  // native 14-decimal token), so formatEther here prints REAL tPOT — see docs/DEPLOYMENT.md
+  console.log(`Balance:  ${ethers.formatEther(await ethers.provider.getBalance(deployer.address))} tPOT`);
 
   const factory = await ethers.getContractFactory("AlertRegistry");
   const registry = await factory.deploy();
