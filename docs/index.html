@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POT Watch — live Portaldot node health &amp; staking intelligence</title>
+<meta name="description" content="Backend-free live dashboard for the Portaldot V3 testnet: block stream, era/session tracking, validator health, and an on-chain AlertRegistry contract. Portaldot Hacker House 2026.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
+</head>
+<body>
+<header>
+  <div class="logo"><div class="mark">⬡</div>POT&nbsp;Watch</div>
+  <div class="net" id="netstat"><span class="dot"></span> connecting…</div>
+  <nav class="navlinks">
+    <a href="https://github.com/iscyman/pot-watch" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/iscyman/pot-watch/blob/main/docs/DEPLOYMENT.md" target="_blank" rel="noopener">Deployment&nbsp;report</a>
+    <a href="https://node-console.portaldot.dev/#/explorer" target="_blank" rel="noopener">Explorer</a>
+  </nav>
+</header>
+<div class="banner">⚡ <b>Live</b> — streamed straight from <span class="mono">test-node-v3.portaldot.dev</span> + <span class="mono">test-evm-rpc-v3.portaldot.dev</span> into your browser. No backend, no API keys, no dependencies. On-chain alerts: <a class="hx mono" href="https://node-console.portaldot.dev/#/explorer/query/0x83d9687785f9ebc481bf713d0d52d6c4b5e9d957871bae5a7fd8b1f58fba25a3" target="_blank" rel="noopener">AlertRegistry @ 0xeae1…429d</a> <span id="boot" style="color:var(--warn)"></span></div>
+
+<main>
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Block Height</div><div class="val mono" id="blk">—</div><div class="sub" id="blkt">connecting…</div></div>
+    <div class="kpi"><div class="lbl">Active Era</div><div class="val mono" id="era">—</div><div class="sub" id="erasub">…</div></div>
+    <div class="kpi"><div class="lbl">Validators</div><div class="val mono" id="vals">—</div><div class="sub" id="valsub">…</div></div>
+    <div class="kpi"><div class="lbl">Avg Block Time</div><div class="val mono" id="btime">…</div><div class="sub">target 6.00s · BABE</div></div>
+    <div class="kpi"><div class="lbl">Network Health</div><div class="val mono" id="healthk">—</div><div class="sub" id="healthsub">composite score</div></div>
+    <div class="kpi"><div class="lbl">Total POT Supply</div><div class="val mono" id="iss">—</div><div class="sub" id="issub">…</div></div>
+  </div>
+
+  <div class="grid">
+    <!-- Live blocks -->
+    <div class="card">
+      <h3>⛓️ Live Block Stream <span class="tag">● streaming · 3s poll</span></h3>
+      <table>
+        <thead><tr><th>#</th><th>Age</th><th>Hash</th><th>Ext</th><th>Author (BABE)</th></tr></thead>
+        <tbody id="blocks"><tr><td colspan="5" style="color:var(--dim);padding:16px">waiting for blocks…</td></tr></tbody>
+      </table>
+      <div class="srcnote">authors decoded client-side from BABE PreRuntime digests — same logic as the POT Watch watcher engine</div>
+    </div>
+
+    <!-- Alert center -->
+    <div class="card">
+      <h3>🔔 On-Chain Alert Center <span class="tag">AlertRegistry · eth_call</span></h3>
+      <div class="cstats" id="cstats"></div>
+      <div class="alerts" id="alertrows"></div>
+      <h3 style="border-top:1px solid var(--line)">📜 Decoded Contract Events <span class="tag">revive.ContractEmitted</span></h3>
+      <div class="alerts" id="eventrows"></div>
+      <div class="srcnote">Solidity events emitted by native-surface txs, decoded from Substrate <span class="mono">revive.ContractEmitted</span> — EVM log indexes don't see native writes (see DEPLOYMENT.md)</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Validators -->
+    <div class="card">
+      <h3>🛡️ Validator Health <span class="tag" id="valcount">…</span></h3>
+      <table>
+        <thead><tr><th>Validator</th><th>Share of blocks</th><th>Authored</th><th>Last block</th><th>Status</th></tr></thead>
+        <tbody id="valrows"></tbody>
+      </table>
+      <div class="srcnote">live window: last 90 blocks (~9 min) observed by this page — the 24/7 watcher keeps persistent history</div>
+    </div>
+
+    <!-- Right column -->
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div class="card">
+        <h3>💓 Network Health Score <span class="tag">computed live</span></h3>
+        <div class="health">
+          <div class="gauge">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#1a2438" stroke-width="9"/>
+              <circle id="gaugeArc" cx="55" cy="55" r="46" fill="none" stroke="url(#g)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 289" transform="rotate(-90 55 55)"/>
+              <defs><linearGradient id="g"><stop offset="0" stop-color="#00d4aa"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs>
+            </svg>
+            <div class="num" id="gaugeNum"><div><b>—</b><span>&nbsp;</span></div></div>
+          </div>
+          <div class="hm" id="hmrows"></div>
+        </div>
+        <div class="srcnote">same scoring model as watcher/src/health.ts: finality 25% · availability 30% · block time 20% · decentralization 15% · security 10%</div>
+      </div>
+
+      <div class="card">
+        <h3>📜 Contract <span class="tag">AlertRegistry</span></h3>
+        <div class="hm" style="padding:6px 16px 14px">
+          <div class="row"><span>Address</span><a class="mono hx" style="font-size:11px" href="https://node-console.portaldot.dev/#/explorer/query/0x83d9687785f9ebc481bf713d0d52d6c4b5e9d957871bae5a7fd8b1f58fba25a3" target="_blank" rel="noopener">0xeae1fb99…b925429d</a></div>
+          <div class="row"><span>Deployed</span><span class="mono">block 133258 · Oct 21 2026</span></div>
+          <div class="row"><span>Deploy route</span><span>native <span class="mono">Revive.instantiate_with_code</span></span></div>
+          <div class="row"><span>Solidity</span><span class="mono">0.8.24 · london · opt 200</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence -->
+  <div class="card" style="margin-bottom:13px">
+    <h3>🧾 Verified Testnet Deployment <span class="tag">from contracts/deployment.json</span></h3>
+    <div id="evid"></div>
+  </div>
+</main>
+<footer>
+  POT Watch · Node health monitoring &amp; staking analytics for Portaldot Network —
+  <a class="hx" href="https://github.com/iscyman/pot-watch" target="_blank" rel="noopener">open source</a> ·
+  built for the <b>Portaldot Hacker House 2026</b> (Node Operations &amp; Tooling track) ·
+  data: live chain RPCs, no backend
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
