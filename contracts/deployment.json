@@ -423,5 +423,33 @@
       }
     }
   ],
-  "evmSurfaceNotes": "eth_call reads work from any Ethereum tooling (verified: activeAlertCount, getAlert). eth_getLogs/receipts do NOT index native-surface writes on spec 3002 \u2014 event ingestion uses Substrate WS revive.ContractEmitted (captured in interactions[].events), which decodes to standard Solidity events (see solidityEventsDecodedFromNative)."
+  "evmSurfaceNotes": "eth_call reads work from any Ethereum tooling (verified: activeAlertCount, getAlert). eth_getLogs/receipts do NOT index native-surface writes on spec 3002 \u2014 event ingestion uses Substrate WS revive.ContractEmitted (captured in interactions[].events), which decodes to standard Solidity events (see solidityEventsDecodedFromNative).",
+  "loopFires": [
+    {
+      "when": "2026-10-26T18:04:45Z",
+      "alertId": 2,
+      "kind": "EraRotation",
+      "via": "watcher/src/fire-once.ts \u2014 autonomous loop mechanism proof (native surface)",
+      "txHash": "0x722b270c6fe719adbccdcc8c2348043bcb98a7e831387235547652ef99039ddf",
+      "blockNumber": 206608,
+      "costTPot": "~0.015",
+      "events": [
+        "balances.Withdraw",
+        "revive.ContractEmitted",
+        "balances.TransferAndHold",
+        "balances.Deposit",
+        "transactionPayment.TransactionFeePaid",
+        "system.ExtrinsicSuccess"
+      ]
+    }
+  ],
+  "loop": {
+    "description": "Watcher evaluates on-chain subscriptions against live chain state and records every fire back on-chain (recordFire, native surface).",
+    "modules": [
+      "watcher/src/loop.ts (pure decisions, 43 unit tests)",
+      "watcher/src/evm.ts (subscription reads)",
+      "watcher/src/firer.ts (native recordFire)"
+    ],
+    "firstReceiptBlock": 206608
+  }
 }

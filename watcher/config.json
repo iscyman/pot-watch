@@ -8,5 +8,14 @@
     { "kind": "era_rotation", "enabled": true },
     { "kind": "validator_inactive", "window": 90, "enabled": true },
     { "kind": "finality_lag", "threshold": 5, "enabled": true }
-  ]
+  ],
+  "loop": {
+    "enabled": true,
+    "evmRpcUrl": "https://test-evm-rpc-v3.portaldot.dev",
+    "contract": "0xeae1fb99ac651fd8a8bc23fb65dc51acb925429d",
+    "checkEveryBlocks": 5,
+    "cooldownBlocks": 100,
+    "dryRun": true,
+    "mnemonicEnv": "POTWATCH_LOOP_MNEMONIC"
+  }
 }

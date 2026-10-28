@@ -1,20 +1,25 @@
 {
   "name": "@pot-watch/watcher",
-  "version": "0.1.0",
-  "description": "Chain-data ingestion & metrics engine for Portaldot Network",
+  "version": "0.7.0",
+  "description": "Chain-data ingestion & metrics engine for Portaldot Network, with an autonomous on-chain alert loop",
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
-    "selfcheck": "tsx src/selfcheck.ts"
+    "selfcheck": "tsx src/selfcheck.ts",
+    "test": "tsx --test test/twox.test.ts test/health.test.ts test/validators.test.ts test/loop.test.ts test/alerts.test.ts",
+    "fire": "tsx src/fire-once.ts"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "@polkadot/api": "^17.0.2",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
-    "@types/ws": "^8.5.10",
-    "tsx": "^4.19.0",
-    "typescript": "^5.5.0"
+    "@types/node": "^20.19.43",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   }
 }

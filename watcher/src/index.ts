@@ -11,7 +11,10 @@ import { readEraState, readValidators } from "./eras.js";
 import { ValidatorStats } from "./validators.js";
 import { computeHealth } from "./health.js";
 import { AlertEngine, type AlertRule } from "./alerts.js";
-import { formatPot } from "./twox.js";
+import { formatPot, ss58ToHex } from "./twox.js";
+import { EvmRpc, readSubscriptions } from "./evm.js";
+import { evaluateAlert, encodeRecordFire, LoopState, KINDS } from "./loop.js";
+import { submitFireNative } from "./firer.js";
 
 interface Config {
   rpcUrl: string;
@@ -20,6 +23,16 @@ interface Config {
   discordWebhook?: string | null;
   alerts?: AlertRule[];
   blockTimeTargetS?: number;
+  loop?: {
+    enabled: boolean;
+    evmRpcUrl: string;
+    contract: string;
+    checkEveryBlocks?: number;
+    cooldownBlocks?: number;
+    /** true (default) = evaluate + log only; false = submit recordFire on-chain */
+    dryRun?: boolean;
+    mnemonicEnv?: string;
+  };
 }
 
 const config: Config = JSON.parse(readFileSync(new URL("../config.json", import.meta.url), "utf8"));
@@ -29,9 +42,16 @@ const useTestnet = process.argv.includes("--testnet");
 const rpcUrl = useTestnet && config.testnetRpcUrl ? config.testnetRpcUrl : config.rpcUrl;
 
 const rpc = new Rpc(rpcUrl);
-const store = new Store(useTestnet ? `${config.dataDir.replace(/\/$/, "")}-testnet` : config.dataDir);
+const dataDir = useTestnet ? `${config.dataDir.replace(/\/$/, "")}-testnet` : config.dataDir;
+const store = new Store(dataDir);
 const vstats = new ValidatorStats();
 const alerts = new AlertEngine(config.alerts ?? [], config.discordWebhook);
+
+// ---- autonomous on-chain alert loop (Package 07) ----
+const loopCfg = config.loop;
+const evm = loopCfg?.enabled ? new EvmRpc(loopCfg.evmRpcUrl) : null;
+const loopState = loopCfg?.enabled ? LoopState.at(dataDir) : null;
+let loopMnemonicWarned = false;
 
 let validators: string[] = [];
 let era = { currentEra: null as number | null, sessionIndex: null as number | null };
@@ -92,6 +112,83 @@ function refreshHealth(blockNumber: number) {
   return health;
 }
 
+/**
+ * Autonomous on-chain alert loop: read our subscriptions from the
+ * AlertRegistry (EVM surface, free), evaluate them against live chain state,
+ * and record every fire back on-chain (native surface, ~0.015 tPOT) so each
+ * alert leaves a verifiable, tamper-evident receipt.
+ */
+async function runLoopCheck(blockNumber: number) {
+  if (!loopCfg?.enabled || !evm || !loopState) return;
+  try {
+    const subs = await readSubscriptions(evm, loopCfg.contract);
+    if (!subs.length) return;
+
+    // activity-based uptime in bps: observed block share vs fair share (1/n)
+    const n = validators.length || 1;
+    const uptimeBps: Record<string, number> = {};
+    for (const s of vstats.summarize(validators)) {
+      const fair = 1 / n;
+      uptimeBps[ss58ToHex(s.address)] = s.inactive
+        ? 0
+        : Math.min(10000, Math.round((s.sharePct / 100 / fair) * 10000));
+    }
+    const ctx = {
+      block: blockNumber,
+      era: era.currentEra,
+      uptimeBps,
+      slashedTargets: [] as string[], // Package 08: Offences pallet scan
+      maxTransferRaw: 0n,             // Package 08: transfer extrinsic scan
+    };
+
+    for (const sub of subs) {
+      const st = loopState.entry(sub.id);
+      const res = evaluateAlert(sub, ctx, st, loopCfg.cooldownBlocks ?? 100);
+      if (!res.fire) continue;
+      const kindName = KINDS[sub.kind] ?? `kind${sub.kind}`;
+      const dry = loopCfg.dryRun !== false;
+      const mnemonic = process.env[loopCfg.mnemonicEnv ?? "POTWATCH_LOOP_MNEMONIC"];
+
+      if (dry || !mnemonic) {
+        if (!dry && !loopMnemonicWarned) {
+          loopMnemonicWarned = true;
+          console.warn(`⚠️  loop: export ${loopCfg.mnemonicEnv ?? "POTWATCH_LOOP_MNEMONIC"} to fire on-chain (staying in dry-run)`);
+        }
+        loopState.recordFire(
+          { id: sub.id, kind: kindName, reason: res.reason, txHash: null, block: blockNumber, at: new Date().toISOString(), dryRun: true },
+          st, ctx
+        );
+        await alerts.notify(`LOOP ${kindName} #${sub.id}`, res.reason, { dryRun: true });
+        continue;
+      }
+
+      try {
+        const out = await submitFireNative({
+          wsUrl: rpcUrl,
+          mnemonic,
+          contract: loopCfg.contract,
+          calldata: encodeRecordFire(sub.id),
+          label: `recordFire#${sub.id}`,
+        });
+        if (out.success) {
+          loopState.recordFire(
+            { id: sub.id, kind: kindName, reason: res.reason, txHash: out.txHash, block: out.blockNumber, at: new Date().toISOString(), dryRun: false },
+            st, ctx
+          );
+          await alerts.notify(`LOOP ${kindName} #${sub.id} → on-chain`, res.reason, { txHash: out.txHash });
+          console.log(`️  loop fired alert #${sub.id} at block ${out.blockNumber} — tx ${out.txHash}`);
+        } else {
+          console.warn(`loop: recordFire #${sub.id} extrinsic failed:`, out.events.join(","));
+        }
+      } catch (e) {
+        console.warn(`loop: fire #${sub.id} failed:`, (e as Error).message);
+      }
+    }
+  } catch (e) {
+    console.warn("loop check failed:", (e as Error).message);
+  }
+}
+
 async function main() {
   console.log(`POT Watch watcher v0.1.0 — connecting to ${rpcUrl}${useTestnet ? " (TESTNET)" : ""}`);
   await rpc.connect();
@@ -150,6 +247,9 @@ async function main() {
     if (processed % 5 === 0) {
       await pollChainState(number);
       store.saveValidatorStats(vstats.summarize(validators));
+    }
+    if (loopCfg?.enabled && processed % (loopCfg.checkEveryBlocks ?? 5) === 0) {
+      await runLoopCheck(number);
     }
     if (processed % 30 === 0) {
       const health = refreshHealth(number);

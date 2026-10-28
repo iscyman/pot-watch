@@ -26,7 +26,8 @@ export class AlertEngine {
 
   async evaluate(currentBlock: number, candidates: AlertEvent[]) {
     for (const e of candidates) {
-      if (e.rule.enabled === false) continue;
+      const cfg = this.rules.find((r) => r.kind === e.rule.kind);
+      if (e.rule.enabled === false || cfg?.enabled === false) continue;
       const k = this.key(e);
       const last = this.firedRecently.get(k);
       if (last !== undefined && currentBlock - last < this.cooldownBlocks) continue;
@@ -37,19 +38,33 @@ export class AlertEngine {
 
   private async deliver(e: AlertEvent) {
     console.log(`🔔 ALERT [${e.rule.kind}] ${e.message}`);
-    if (this.webhookUrl) {
-      try {
-        await fetch(this.webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "POT Watch",
-            embeds: [{ title: `🔔 ${e.rule.kind}`, description: e.message, color: 0x7c5cff, timestamp: new Date(e.at).toISOString() }],
-          }),
-        });
-      } catch (err) {
-        console.warn("webhook delivery failed:", (err as Error).message);
-      }
+    await this.post(`🔔 ${e.rule.kind}`, e.message);
+  }
+
+  /**
+   * Out-of-band notification used by the autonomous loop to publish fire
+   * receipts (with the on-chain tx hash) to the configured channel.
+   */
+  async notify(title: string, message: string, opts?: { txHash?: string | null; dryRun?: boolean }) {
+    const prefix = opts?.dryRun ? "🧪 (dry-run) " : "🔔 ";
+    console.log(`${prefix}${title}: ${message}${opts?.txHash ? ` | tx ${opts.txHash}` : ""}`);
+    const desc = opts?.txHash ? `${message}\n\n🧾 on-chain receipt: \`${opts.txHash}\`` : message;
+    await this.post(`${prefix}${title}`, desc);
+  }
+
+  private async post(title: string, description: string) {
+    if (!this.webhookUrl) return;
+    try {
+      await fetch(this.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "POT Watch",
+          embeds: [{ title, description, color: 0x7c5cff, timestamp: new Date().toISOString() }],
+        }),
+      });
+    } catch (err) {
+      console.warn("webhook delivery failed:", (err as Error).message);
     }
   }
 }

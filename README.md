@@ -1,6 +1,8 @@
+<p align="center"><img src="docs/logo.png" alt="POT Watch mark" width="110" /></p>
+
 # ⬡ POT Watch
 
-**Node health monitoring & staking analytics for Portaldot** — a live watcher engine, an on-chain alert registry, and a zero-backend dashboard.
+**Node health monitoring & staking analytics for Portaldot** — a live watcher engine, an autonomous on-chain alert loop, and a zero-backend dashboard.
 
 Built for the **Portaldot Hacker House 2026** · *Node Operations & Tooling* track.
 
@@ -15,6 +17,7 @@ Built for the **Portaldot Hacker House 2026** · *Node Operations & Tooling* tra
 ## What it does
 
 - **Watcher engine** (`watcher/`) — TypeScript, zero heavy dependencies. Streams live blocks, tracks eras/sessions, decodes BABE authorship, computes per-validator uptime and a composite **network health score** (finality 25% · availability 30% · block time 20% · decentralization 15% · security 10%), and fires alerts to Discord/Telegram. Runs against **mainnet and testnet** (`npm start -- --testnet`).
+- **Autonomous on-chain alert loop** (`watcher/src/loop.ts`, `evm.ts`, `firer.ts`) — the watcher reads its own subscriptions from the deployed AlertRegistry, evaluates them against live chain state, and records every fire back on-chain via `recordFire` on the **native surface (~0.015 tPOT)**. Detection → on-chain receipt → channel delivery with no human in the circuit; `fireCount`/`AlertFired` on-chain are the tamper-evident ledger. First receipt: block **206608**, tx `0x722b270c…99039ddf`.
 - **AlertRegistry contract** (`contracts/`) — Solidity 0.8.24, deployed live on the Portaldot V3 testnet. On-chain alert subscriptions: kinds (validator uptime, era rotation, slash events, large transfers), channels, thresholds, permissionless `recordFire` with per-block cooldown, and per-alert fire statistics. 6/6 unit tests; verified interactions and decoded events on-chain.
 - **Dashboard** (`docs/`) — the live site above. **Backend-free and dependency-free**: your browser talks directly to the Substrate JSON-RPC and the EVM JSON-RPC (raw `fetch`, hand-rolled SCALE/twox128/ss58/BABE decoding, one vendored MIT blake2b). Shows the live block stream, era/session state, validator activity, health score, and the contract's on-chain alerts + decoded events.
 
@@ -28,10 +31,11 @@ Deploying the same contract costs **~289 tPOT via the EVM/MetaMask surface** but
 ## Quick start
 
 ```bash
-# watcher — live network monitoring
-cd watcher && npm install && npm run selfcheck   # 9/9 checks
+# watcher — live network monitoring + autonomous on-chain alert loop
+cd watcher && npm install && npm run selfcheck   # 9/9 primitive checks
+npm test                                         # 43 unit tests (49 repo-wide)
 npm start                                        # mainnet
-npm start -- --testnet                           # V3 testnet
+npm start -- --testnet                           # V3 testnet + alert loop (dry-run by default)
 
 # contracts — tests + testnet tooling
 cd contracts && npm install
@@ -41,9 +45,18 @@ npm run testnet:deploy                           # native deploy pipeline (see .
 # dashboard — just open docs/index.html (or any static server)
 ```
 
+## Business model
+
+Freemium node-ops intelligence: free public dashboard → **Pro alert
+subscriptions settled on-chain in POT** (the AlertRegistry already holds the
+subscription ledger) → B2B validator SLA reports & white-label dashboards →
+historical health/fee-model data API. Full revenue math and ecosystem
+fit: [`BUSINESS.md`](BUSINESS.md).
+
 ## Project docs
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — system design & data flow
+- [`BUSINESS.md`](BUSINESS.md) — business model, pricing & ecosystem economics
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — phase plan
 - [`docs/CHECKIN.md`](docs/CHECKIN.md) — hackathon check-in: progress, evidence, outstanding items
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — testnet deployment report & fee-model analysis

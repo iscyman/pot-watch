@@ -157,6 +157,31 @@ export function ss58(pub: Uint8Array, prefix = 42): string {
   return base58(new Uint8Array(Buffer.concat([Buffer.from(payload), chk])));
 }
 
+/** Inverse of ss58(): ss58 address → 0x-prefixed 32-byte pubkey hex.
+ *  Lets the autonomous loop match on-chain bytes32 alert targets against the
+ *  ss58 validator set with zero dependencies. */
+export function ss58ToHex(addr: string): string {
+  let n = 0n;
+  for (const c of addr) {
+    const d = ALPHABET.indexOf(c);
+    if (d < 0) throw new Error(`bad base58 char: ${c}`);
+    n = n * 58n + BigInt(d);
+  }
+  const bytes: number[] = [];
+  while (n > 0n) {
+    bytes.unshift(Number(n % 256n));
+    n /= 256n;
+  }
+  for (const c of addr) {
+    if (c !== "1") break;
+    bytes.unshift(0);
+  }
+  // layout: prefix (1B for prefixes 0–63) | pubkey (32B) | checksum (2B)
+  const pub = bytes.slice(1, 33);
+  if (pub.length !== 32) throw new Error(`ss58 payload too short: ${bytes.length}B`);
+  return "0x" + pub.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ---------- utils ----------
 export function hexToBytes(hex: string): Uint8Array {
   const h = hex.startsWith("0x") ? hex.slice(2) : hex;
@@ -173,5 +198,5 @@ export function abbreviate(addr: string, head = 6, tail = 4): string {
 export function formatPot(raw: bigint, dp = 2): string {
   const whole = raw / 10n ** 14n;
   const frac = (raw % 10n ** 14n).toString().padStart(14, "0").slice(0, dp);
-  return `${whole.toLocaleString ? whole.toString() : whole}.${frac}`;
+  return `${whole.toString()}.${frac}`;
 }
