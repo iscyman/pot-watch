@@ -18,7 +18,7 @@ to `data/` (JSONL — SQLite migration lands with the dashboard API).
 ```bash
 npm install
 npm run selfcheck      # verifies xxhash/SCALE/ss58 primitives against ground truth
-npm test               # 59 unit tests (node:test via tsx)
+npm test               # 63 unit tests (node:test via tsx)
 npm start              # streams live from mainnet (wss://mainnet.portaldot.io)
 npm start -- --testnet # streams from the official V3 testnet + runs the alert loop
 ```
@@ -70,6 +70,16 @@ read **only** from the environment (`loop.mnemonicEnv`), never from disk or
 logs. `@polkadot/api` is imported lazily — detection and the dashboard data
 path never load it.
 
+### Alert management CLI (Package 09)
+```bash
+npm run alert -- list                                  # EVM read, free
+POTWATCH_LOOP_MNEMONIC="…" npm run alert -- register 0 9000 0 [targetHex32]
+POTWATCH_LOOP_MNEMONIC="…" npm run alert -- cancel 3
+```
+Writes use the native surface (~0.02 tPOT). The dashboard's 🧙 Alert Wizard
+builds the same calldata in-browser and can either copy this command or send
+via an EVM wallet (with a fee warning — EVM surface costs ~100× more).
+
 ### One-shot fire (demo / mechanism proof)
 ```bash
 POTWATCH_LOOP_MNEMONIC="…" npm run fire -- 2        # recordFire(#2) on-chain
@@ -120,9 +130,9 @@ specVersion 3002, token `tPOT` (14 decimals, ss58 42), 2 validators.
 npm test    # 59 tests: twox/SCALE/ss58 vectors, health math, validator metrics,
             # loop decisions (ABI decode, cooldowns, all four kinds), alert engine,
             # metadata walker (cursor, variants, newtypes, shape discovery),
-            # event extraction, stake HHI + churn
+            # event extraction, stake HHI + churn, register/cancel calldata
 ```
-Plus `contracts/`: `npx hardhat test` → 6/6. **65 tests across the repo.**
+Plus `contracts/`: `npx hardhat test` → 6/6. **69 tests across the repo.**
 
 ## Module map
 ```
@@ -140,6 +150,7 @@ src/evm.ts        → retry-hardened EVM JSON-RPC reader + subscription loader
 src/loop.ts       → autonomous loop: ABI decode, pure fire decisions, durable state
 src/firer.ts      → native-surface recordFire submitter (lazy @polkadot/api)
 src/fire-once.ts  → one-shot on-chain fire CLI (demo / mechanism proof)
+src/alert-cli.ts  → subscription management CLI (list/register/cancel, native)
 src/store.ts      → JSONL persistence
 src/index.ts      → orchestrator (24/7 loop + autonomous alert loop)
 src/selfcheck.ts  → primitives test suite

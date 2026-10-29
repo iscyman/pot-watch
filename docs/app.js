@@ -10,7 +10,7 @@ import {
   storageKey, hexToBytes, decU32, decU64, decU128, decVecAccountId, decCompact,
   abbreviate, formatPot,
 } from './twox.js';
-import { SEC, initSecurity, refreshStakes, scanBlocks, renderSecurity } from './security.js';
+import { SEC, initSecurity, refreshStakes, scanBlocks, renderSecurity, eventsAtBlock } from './security.js';
 
 // ---------------- config ----------------
 export const CFG = {
@@ -37,6 +37,8 @@ const SEL = {
   totalCancelled: '0x2a5ff002',
 };
 const KINDS = ['ValidatorUptime', 'EraRotation', 'SlashEvent', 'LargeTransfer'];
+const TOPIC_ALERT_FIRED = '0x27d9e20229c1cfc053b1e26adedd12438ee3d610855454ae152ebf56f8dc1238';
+const SEL_REG = '0xd042b3df'; // registerAlert(uint8,bytes32,uint64,uint8)
 const CHANNELS = ['Discord', 'Telegram'];
 
 // Substrate storage keys (fixed twox128 pairs)
@@ -194,6 +196,7 @@ async function fetchBlockByNumber(num) {
   return {
     number: parseInt(h.number, 16), hash, parent: h.parentHash,
     extrinsics: (b.block.extrinsics || []).length, authorIndex,
+    ts: Date.now(),   // local receipt time (block-time sparkline)
   };
 }
 
@@ -273,7 +276,55 @@ export async function tickBlocks() {
   } catch (e) { S.subOk = false; }
 }
 
+const padW = (n) => BigInt(n).toString(16).padStart(64, '0');
+
+/** Live AlertFired feed: decode revive.ContractEmitted from recent blocks.
+ *  (Native-surface txs emit NO EVM logs on Portaldot — the Substrate event is
+ *  the only live source; see docs/DEPLOYMENT.md "event indexing gaps".) */
+async function readFireFeed() {
+  if (!SEC.ready) return;
+  try {
+    const to = S.best;
+    const from = S.ffWatermark || Math.max(0, to - 30);
+    const last = Math.min(to, from + 5);
+    for (let b = from + 1; b <= last; b++) {
+      const hash = await rpc(CFG.sub, 'chain_getBlockHash', [b], 2).catch(() => null);
+      if (!hash) continue;
+      for (const e of await eventsAtBlock(rpc, CFG, hash)) {
+        if (e.pallet !== 'Revive' || e.name !== 'ContractEmitted') continue;
+        if ((e.fields.contract ?? '').toLowerCase() !== CFG.contract.toLowerCase()) continue;
+        // Portaldot splits the Solidity log: topics[] + data (non-indexed words)
+        const tps = e.fields.topics ?? [];
+        if ((tps[0] ?? '').toLowerCase() !== TOPIC_ALERT_FIRED) continue;
+        S.fireFeed.push({
+          id: Number(BigInt(tps[1] ?? 0)),
+          watcher: '0x' + (tps[2] ?? '').slice(26),
+          block: b,
+          tx: hash,
+          src: 'live',
+        });
+      }
+    }
+    S.ffWatermark = last;
+    S.fireFeed.sort((a, b) => b.block - a.block);
+    if (S.fireFeed.length > 40) S.fireFeed.length = 40;
+  } catch (e) { /* feed is best-effort */ }
+}
+
+/** sparkline SVG (inline, no deps) */
+function sparkline(vals, w = 150, h = 34, color = '#00d4aa') {
+  if (!vals.length) return '';
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = max - min || 1;
+  const pts = vals.map((v, i) => `${(i / Math.max(1, vals.length - 1)) * w},${h - 3 - ((v - min) / span) * (h - 8)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>`;
+}
+
 let secTick = 0;
+S.fireFeed = [];      // { id, watcher, block, tx, src }
+S.ffWatermark = 0;
+S.healthHist = [];    // { t, score } session ring
+
 export async function tickSecurityNow() {
   if (!SEC.ready) return;
   try {
@@ -301,6 +352,9 @@ export async function tickSlow() {
     S.subOk = true;
   } catch (e) { S.subOk = false; }
   try { S.contract = await readContract(); S.evmOk = true; } catch (e) { S.evmOk = false; }
+  await readFireFeed();
+  S.healthHist.push({ t: Date.now(), score: health().score });
+  if (S.healthHist.length > 120) S.healthHist.shift();
   await tickSecurityNow();
 }
 
@@ -309,6 +363,12 @@ export async function loadEvidence() {
     const r = await fetch(CFG.deployJson + '?t=' + Date.now());
     S.evidence = await r.json();
     S.events = (S.evidence.solidityEventsDecodedFromNative || []).slice().reverse();
+    for (const e of S.events) {
+      if (e.solidityEvent === 'AlertFired') {
+        S.fireFeed.push({ id: Number(e.args?.id ?? 0), watcher: e.args?.watcher ?? '', block: e.blockNumber, tx: e.txHash, src: 'evidence' });
+      }
+    }
+    S.fireFeed.sort((a, b) => b.block - a.block);
   } catch { S.evidence = null; }
 }
 
@@ -513,11 +573,67 @@ function renderEvidence() {
     </div>`;
 }
 
+function renderFireFeed() {
+  const el = $('firerows');
+  if (!el) return;
+  el.innerHTML = S.fireFeed.length
+    ? S.fireFeed.slice(0, 8).map((f) => `<div class="row"><span>🔥 alert #${f.id} fired by <span class="mono">${(f.watcher || '').slice(0, 8)}…</span> · block ${f.block} ${f.src === 'live' ? '<span style="color:var(--acc2)">· live</span>' : ''}</span><a class="mono hx" style="font-size:11px" href="${CFG.explorer(f.tx)}" target="_blank" rel="noopener">${(f.tx || '').slice(0, 10)}…</a></div>`).join('')
+    : '<div class="row"><span>awaiting on-chain fire receipts…</span><span></span></div>';
+}
+
+function renderSparks() {
+  const bt = $('sparkBtime');
+  if (bt) {
+    const hs = S.headers.slice(0, 31).filter((h) => h.ts).reverse();
+    const secs = [];
+    for (let i = 1; i < hs.length; i++) secs.push((hs[i].ts - hs[i - 1].ts) / 1000);
+    bt.innerHTML = sparkline(secs, 150, 30, '#4aa3ff');
+  }
+  const hh = $('sparkHealth');
+  if (hh) hh.innerHTML = sparkline(S.healthHist.map((x) => x.score), 150, 30, '#7c5cff');
+}
+
+function wireWizard() {
+  const $w = (id) => document.getElementById(id);
+  const build = () => {
+    const kind = Number($w('wzKind')?.value ?? 0);
+    const thr = BigInt($w('wzThr')?.value || '0');
+    const ch = Number($w('wzCh')?.value ?? 0);
+    const tgt = ($w('wzTarget')?.value || '').trim() || '0x' + '00'.repeat(32);
+    const t = tgt.replace(/^0x/, '');
+    if (t.length !== 64) return { err: 'target must be 32 bytes hex (or leave empty)' };
+    return { data: SEL_REG + padW(kind) + t + padW(thr) + padW(ch), kind, thr, ch };
+  };
+  $w('wzCopy')?.addEventListener('click', () => {
+    const b = build();
+    if (b.err) { $w('wzOut').textContent = '⚠️ ' + b.err; return; }
+    const cmd = `POTWATCH_LOOP_MNEMONIC="…" npm run alert -- register ${b.kind} ${b.thr} ${b.ch} ${($w('wzTarget')?.value || '').trim() || ''}`.trimEnd();
+    navigator.clipboard?.writeText(cmd);
+    $w('wzOut').textContent = '📋 copied watcher command (native surface, ~0.02 tPOT): ' + cmd;
+  });
+  $w('wzSend')?.addEventListener('click', async () => {
+    const out = $w('wzOut');
+    const b = build();
+    if (b.err) { out.textContent = '⚠️ ' + b.err; return; }
+    if (!window.ethereum) { out.textContent = '⚠️ no EVM wallet injected — use the copy-command flow (native surface is ~800× cheaper)'; return; }
+    try {
+      const chainId = '0x' + CFG.chainId.toString(16);
+      try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); }
+      catch {
+        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId, chainName: 'Portaldot V3 Testnet', rpcUrls: [CFG.evm], nativeCurrency: { name: 'tPOT', symbol: 'tPOT', decimals: 14 } }] });
+      }
+      const [from] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const hash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from, to: CFG.contract, data: b.data }] });
+      out.textContent = '✅ sent via wallet: ' + hash + ' (EVM surface — mind the fee!)';
+    } catch (e) { out.textContent = '⚠️ wallet: ' + (e.message ?? e); }
+  });
+}
+
 function renderAll() {
   const h = health();
   renderKpis(h); renderBlocks(); renderValidators(h);
   renderContract(); renderEvents(); renderHealth(h); renderEvidence();
-  renderSecurity(S);
+  renderSecurity(S); renderFireFeed(); renderSparks();
 }
 
 export function start() {
@@ -525,6 +641,7 @@ export function start() {
   (async () => {
     $('boot').textContent = 'connecting to testnet…';
     await Promise.all([bootstrap(), loadEvidence(), initSecurity(rpc, CFG)]);
+    wireWizard();
     $('boot').textContent = '';
     await tickSlow();
     renderAll();

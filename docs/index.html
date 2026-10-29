@@ -26,8 +26,8 @@
     <div class="kpi"><div class="lbl">Block Height</div><div class="val mono" id="blk">—</div><div class="sub" id="blkt">connecting…</div></div>
     <div class="kpi"><div class="lbl">Active Era</div><div class="val mono" id="era">—</div><div class="sub" id="erasub">…</div></div>
     <div class="kpi"><div class="lbl">Validators</div><div class="val mono" id="vals">—</div><div class="sub" id="valsub">…</div></div>
-    <div class="kpi"><div class="lbl">Avg Block Time</div><div class="val mono" id="btime">…</div><div class="sub">target 6.00s · BABE</div></div>
-    <div class="kpi"><div class="lbl">Network Health</div><div class="val mono" id="healthk">—</div><div class="sub" id="healthsub">composite score</div></div>
+    <div class="kpi"><div class="lbl">Avg Block Time</div><div class="val mono" id="btime">…</div><div class="sub">target 6.00s · BABE</div><div id="sparkBtime" style="padding:4px 14px 8px"></div></div>
+    <div class="kpi"><div class="lbl">Network Health</div><div class="val mono" id="healthk">—</div><div class="sub" id="healthsub">composite score</div><div id="sparkHealth" style="padding:4px 14px 8px"></div></div>
     <div class="kpi"><div class="lbl">Total POT Supply</div><div class="val mono" id="iss">—</div><div class="sub" id="issub">…</div></div>
   </div>
 
@@ -49,6 +49,8 @@
       <div class="alerts" id="alertrows"></div>
       <h3 style="border-top:1px solid var(--line)">📜 Decoded Contract Events <span class="tag">revive.ContractEmitted</span></h3>
       <div class="alerts" id="eventrows"></div>
+      <h3 style="margin-top:10px">🔥 On-chain Fire Feed <span class="tag">AlertFired logs · live</span></h3>
+      <div class="alerts" id="firerows"></div>
       <div class="srcnote">Solidity events emitted by native-surface txs, decoded from Substrate <span class="mono">revive.ContractEmitted</span> — EVM log indexes don't see native writes (see DEPLOYMENT.md)</div>
     </div>
   </div>
@@ -92,6 +94,31 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Alert wizard (Package 09) -->
+  <div class="card" style="margin-bottom:13px">
+    <h3>🧙 Alert Wizard <span class="tag">create on-chain subscriptions</span></h3>
+    <div style="padding:10px 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      <label style="font-size:12px;color:var(--dim)">Kind
+        <select id="wzKind" style="width:100%;margin-top:4px;padding:7px;background:#0d1524;color:var(--fg);border:1px solid #1c2a41;border-radius:8px">
+          <option value="0">ValidatorUptime</option><option value="1">EraRotation</option>
+          <option value="2">SlashEvent</option><option value="3">LargeTransfer</option>
+        </select></label>
+      <label style="font-size:12px;color:var(--dim)">Threshold <span id="wzThrHint">(bps for uptime, POT for transfers)</span>
+        <input id="wzThr" value="9000" style="width:100%;margin-top:4px;padding:7px;background:#0d1524;color:var(--fg);border:1px solid #1c2a41;border-radius:8px"></label>
+      <label style="font-size:12px;color:var(--dim)">Channel
+        <select id="wzCh" style="width:100%;margin-top:4px;padding:7px;background:#0d1524;color:var(--fg);border:1px solid #1c2a41;border-radius:8px">
+          <option value="0">Discord</option><option value="1">Telegram</option>
+        </select></label>
+      <label style="font-size:12px;color:var(--dim)">Target (32B hex, empty = network-wide)
+        <input id="wzTarget" placeholder="0x00…00" style="width:100%;margin-top:4px;padding:7px;background:#0d1524;color:var(--fg);border:1px solid #1c2a41;border-radius:8px"></label>
+    </div>
+    <div style="padding:0 16px 14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button id="wzCopy" style="padding:8px 14px;border-radius:8px;border:1px solid #1c2a41;background:#12203a;color:var(--fg);cursor:pointer">📋 Copy watcher command</button>
+      <button id="wzSend" style="padding:8px 14px;border-radius:8px;border:1px solid #2a1c41;background:#20123a;color:var(--fg);cursor:pointer">💳 Send via EVM wallet</button>
+    </div>
+    <div class="hm" style="padding:0 16px 14px"><div class="row"><span id="wzOut" style="color:var(--dim);font-size:12px">Native surface ≈ 0.02 tPOT per register · EVM surface costs ~100× more — the wizard tells you why.</span><span></span></div></div>
   </div>
 
   <!-- Security analytics (Package 08) -->

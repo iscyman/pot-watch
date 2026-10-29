@@ -54,6 +54,12 @@ function decodeEvents(raw) {
   return out;
 }
 
+/** Named Substrate events of one block (for ContractEmitted scans etc.). */
+export async function eventsAtBlock(rpc, CFG, hash) {
+  const raw = await rpc(CFG.sub, 'state_getStorage', [EVENTS_KEY, hash], 2).catch(() => null);
+  return decodeEvents(raw);
+}
+
 /** Stakes from the Staking.Ledger map (struct carries its own stash). */
 export async function refreshStakes(rpc, CFG) {
   if (!dec) return;

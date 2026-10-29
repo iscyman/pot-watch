@@ -11,6 +11,9 @@ import {
   decodeAlert,
   encodeRecordFire,
   encodeGetAlert,
+  encodeRegisterAlert,
+  encodeCancelAlert,
+  TOPIC_ALERT_FIRED,
   evaluateAlert,
   emptyEntry,
   LoopState,
@@ -163,4 +166,26 @@ test("LoopState persists entries and the fire ledger across restarts", () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("encodeRegisterAlert lays out kind/target/threshold/channel words", () => {
+  const d = encodeRegisterAlert(0, T, 9000n, 1);
+  assert.equal(d.slice(0, 10), "0xd042b3df");
+  assert.equal(d.length, 2 + 8 + 64 * 4);
+  assert.equal(d.slice(10, 74), w(0));                    // kind
+  assert.equal(d.slice(74, 138), "ab".repeat(32));        // target
+  assert.equal(d.slice(138, 202), w(9000));               // threshold
+  assert.equal(d.slice(202, 266), w(1));                  // channel
+});
+
+test("encodeRegisterAlert rejects bad targets", () => {
+  assert.throws(() => encodeRegisterAlert(0, "0x1234", 1n, 0), /32 bytes/);
+});
+
+test("encodeCancelAlert uses the verified selector", () => {
+  assert.equal(encodeCancelAlert(3), "0x95784219" + w(3));
+});
+
+test("AlertFired topic matches the deployed contract's event signature", () => {
+  assert.equal(TOPIC_ALERT_FIRED, "0x27d9e20229c1cfc053b1e26adedd12438ee3d610855454ae152ebf56f8dc1238");
 });

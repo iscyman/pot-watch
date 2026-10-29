@@ -451,5 +451,14 @@
       "watcher/src/firer.ts (native recordFire)"
     ],
     "firstReceiptBlock": 206608
-  }
+  },
+  "management": [
+    {
+      "when": "2026-10-28T12:03:00Z",
+      "action": "registerAlert(LargeTransfer, threshold=100000 POT, Discord) via watcher alert-cli (native surface)",
+      "alertId": 3,
+      "txHash": "0x55aaff8e0f747e1c77f16ae133793b1096c873aa2517245b31fb3a63276cc094",
+      "blockNumber": 231652
+    }
+  ]
 }

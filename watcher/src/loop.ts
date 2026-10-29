@@ -22,7 +22,13 @@ export const SEL = {
   nextId: "0x61b8ce8c",
   getAlert: "0x85081886",
   recordFire: "0x2cabcf78",
+  registerAlert: "0xd042b3df", // registerAlert(uint8,bytes32,uint64,uint8)
+  cancelAlert: "0x95784219",   // cancelAlert(uint256)
+  listAlerts: "0x566947b9",    // listAlerts(address)
 } as const;
+
+/** AlertFired(uint256,address,uint256) — full keccak topic, for log scans */
+export const TOPIC_ALERT_FIRED = "0x27d9e20229c1cfc053b1e26adedd12438ee3d610855454ae152ebf56f8dc1238";
 
 export const KINDS = ["ValidatorUptime", "EraRotation", "SlashEvent", "LargeTransfer"] as const;
 export const CHANNELS = ["Discord", "Telegram"] as const;
@@ -79,6 +85,18 @@ export function padUint(n: bigint | number): string {
 /** calldata for recordFire(uint256 id) */
 export function encodeRecordFire(id: number): string {
   return SEL.recordFire + padUint(id);
+}
+
+/** calldata for registerAlert(Kind,bytes32 target,uint64 threshold,Channel) */
+export function encodeRegisterAlert(kind: number, target: string, threshold: bigint, channel: number): string {
+  const t = target.replace(/^0x/, "");
+  if (t.length !== 64 || /[^0-9a-f]/i.test(t)) throw new Error("target must be 32 bytes hex");
+  return SEL.registerAlert + padUint(kind) + t + padUint(threshold) + padUint(channel);
+}
+
+/** calldata for cancelAlert(uint256 id) */
+export function encodeCancelAlert(id: number): string {
+  return SEL.cancelAlert + padUint(id);
 }
 
 /** calldata for getAlert(uint256 id) */

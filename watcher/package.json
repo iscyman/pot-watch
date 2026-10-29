@@ -10,7 +10,8 @@
     "start": "tsx src/index.ts",
     "selfcheck": "tsx src/selfcheck.ts",
     "test": "tsx --test test/twox.test.ts test/health.test.ts test/validators.test.ts test/loop.test.ts test/alerts.test.ts test/walker.test.ts test/events.test.ts",
-    "fire": "tsx src/fire-once.ts"
+    "fire": "tsx src/fire-once.ts",
+    "alert": "tsx src/alert-cli.ts"
   },
   "dependencies": {
     "@polkadot/api": "^17.0.2",
