@@ -18,10 +18,24 @@ to `data/` (JSONL — SQLite migration lands with the dashboard API).
 ```bash
 npm install
 npm run selfcheck      # verifies xxhash/SCALE/ss58 primitives against ground truth
-npm test               # 43 unit tests (node:test via tsx)
+npm test               # 59 unit tests (node:test via tsx)
 npm start              # streams live from mainnet (wss://mainnet.portaldot.io)
 npm start -- --testnet # streams from the official V3 testnet + runs the alert loop
 ```
+
+## Security analytics (Package 08)
+`src/walker.ts` parses the chain's FRAME metadata (v14 portable registry) with
+zero dependencies and decodes ANY storage value or event by TypeId. On top:
+- `src/events.ts` — `System.Events` per block → named events; slash /
+  transfer / session extraction (feeds loop kinds 2 & 3 with real data)
+- `src/security.ts` — stake concentration (Staking.Ledger walk → HHI),
+  validator churn per session, slash feed, health-score history
+  (`data/security.json` + `security.jsonl`)
+- dashboard mirrors all of it live in the browser (`docs/walk.js`,
+  `docs/security.js`) — same algorithms, no backend
+
+Verified live on V3 testnet (block ~231.4k): 911-type registry parsed,
+5 bonded accounts decoded, stake HHI 0.4986 (two validators ≈ 49.93% each).
 
 ## The autonomous alert loop
 ```
@@ -103,10 +117,12 @@ specVersion 3002, token `tPOT` (14 decimals, ss58 42), 2 validators.
 
 ## Tests
 ```bash
-npm test    # 43 tests: twox/SCALE/ss58 vectors, health math, validator metrics,
-            # loop decisions (ABI decode, cooldowns, all four kinds), alert engine
+npm test    # 59 tests: twox/SCALE/ss58 vectors, health math, validator metrics,
+            # loop decisions (ABI decode, cooldowns, all four kinds), alert engine,
+            # metadata walker (cursor, variants, newtypes, shape discovery),
+            # event extraction, stake HHI + churn
 ```
-Plus `contracts/`: `npx hardhat test` → 6/6. **49 tests across the repo.**
+Plus `contracts/`: `npx hardhat test` → 6/6. **65 tests across the repo.**
 
 ## Module map
 ```
@@ -117,6 +133,9 @@ src/eras.ts       → era/session/issuance readers
 src/validators.ts → uptime/activity metrics engine
 src/health.ts     → 0–100 network health score
 src/alerts.ts     → rule evaluator + Discord delivery (+ loop receipts)
+src/walker.ts     → FRAME metadata v14 parser + generic SCALE value decoder
+src/events.ts     → System.Events decoder + slash/transfer/session extraction
+src/security.ts   → stake HHI, validator churn, slash feed, health history
 src/evm.ts        → retry-hardened EVM JSON-RPC reader + subscription loader
 src/loop.ts       → autonomous loop: ABI decode, pure fire decisions, durable state
 src/firer.ts      → native-surface recordFire submitter (lazy @polkadot/api)

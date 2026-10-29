@@ -15,6 +15,9 @@ import { formatPot, ss58ToHex } from "./twox.js";
 import { EvmRpc, readSubscriptions } from "./evm.js";
 import { evaluateAlert, encodeRecordFire, LoopState, KINDS } from "./loop.js";
 import { submitFireNative } from "./firer.js";
+import { EventReader, extractSlashes, extractTransfers, extractNewSession } from "./events.js";
+import { SecurityMonitor } from "./security.js";
+import { Decoder } from "./walker.js";
 
 interface Config {
   rpcUrl: string;
@@ -52,6 +55,13 @@ const loopCfg = config.loop;
 const evm = loopCfg?.enabled ? new EvmRpc(loopCfg.evmRpcUrl) : null;
 const loopState = loopCfg?.enabled ? LoopState.at(dataDir) : null;
 let loopMnemonicWarned = false;
+
+// ---- security analytics (Package 08) ----
+const eventReader = new EventReader(rpc);
+const security = new SecurityMonitor(rpc, () => (eventReader.registry ? new Decoder(eventReader.registry) : null), dataDir);
+let eventsReady = false;
+let pendingSlashTargets: string[] = [];
+let maxTransferSinceCheck = 0n;
 
 let validators: string[] = [];
 let era = { currentEra: null as number | null, sessionIndex: null as number | null };
@@ -137,9 +147,11 @@ async function runLoopCheck(blockNumber: number) {
       block: blockNumber,
       era: era.currentEra,
       uptimeBps,
-      slashedTargets: [] as string[], // Package 08: Offences pallet scan
-      maxTransferRaw: 0n,             // Package 08: transfer extrinsic scan
+      slashedTargets: [...pendingSlashTargets],
+      maxTransferRaw: maxTransferSinceCheck,
     };
+    pendingSlashTargets = [];
+    maxTransferSinceCheck = 0n;
 
     for (const sub of subs) {
       const st = loopState.entry(sub.id);
@@ -195,6 +207,17 @@ async function main() {
   validators = await readValidators(rpc);
   console.log(`✓ connected — ${validators.length} validators in active set`);
 
+  await eventReader
+    .init()
+    .then(async () => {
+      eventsReady = true;
+      console.log("✓ metadata walker ready — decoding events + staking storage by chain types");
+      await security.refreshStakes(validators);
+      security.noteValidatorSet(null, validators);
+      console.log(`✓ stake concentration: ${security.rows.length} bonded rows, stake HHI ${security.stakeHhi().toFixed(3)}`);
+    })
+    .catch((e) => console.warn("security/event reader init failed (monitoring continues):", (e as Error).message));
+
   // baseline finality so lag starts at a real value
   const finHead = await rpc.call<string>("chain_getFinalizedHead");
   const finHeader = await rpc.call<any>("chain_getHeader", [finHead]);
@@ -244,6 +267,30 @@ async function main() {
       Math.max(0, latestBest - latestFinalized)
     ));
 
+    if (eventsReady) {
+      try {
+        const evs = await eventReader.eventsAt(hash);
+        const sl = extractSlashes(evs, number);
+        if (sl.length) {
+          security.noteSlashes(sl);
+          pendingSlashTargets.push(...sl.map((x) => x.who));
+          for (const x of sl) console.log(`🩸 SLASH ${x.source} ${x.who.slice(0, 10)}… amount ${x.amount / 10n ** 14n} POT (block ${number})`);
+        }
+        for (const t of extractTransfers(evs)) {
+          if (t.amount > maxTransferSinceCheck) maxTransferSinceCheck = t.amount;
+        }
+        const ns = extractNewSession(evs);
+        if (ns !== null) {
+          validators = await readValidators(rpc);
+          const churn = security.noteValidatorSet(ns, validators);
+          await security.refreshStakes(validators);
+          console.log(`🔄 session ${ns}: ${validators.length} validators (joined ${churn.joined.length}, left ${churn.left.length}) · stake HHI ${security.stakeHhi().toFixed(3)}`);
+        }
+      } catch (e) {
+        console.warn("event scan failed for block", number, (e as Error).message);
+      }
+    }
+
     if (processed % 5 === 0) {
       await pollChainState(number);
       store.saveValidatorStats(vstats.summarize(validators));
@@ -253,6 +300,8 @@ async function main() {
     }
     if (processed % 30 === 0) {
       const health = refreshHealth(number);
+      security.appendHealth({ at: now, atBlock: number, score: health.score, grade: health.grade });
+      if (eventsReady) security.snapshot(number);
       store.saveState({ validators, era, latestBest, latestFinalized, processed, at: now });
       console.log(`💓 health ${health.score}/100 (${health.grade}) | era ${era.currentEra} | sess ${era.sessionIndex} | blocks watched: ${processed}`);
       const inactive = vstats.summarize(validators).filter((s) => s.inactive);

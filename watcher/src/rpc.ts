@@ -74,8 +74,8 @@ export class Rpc {
     return subId;
   }
 
-  async getStorage(key: string): Promise<string | null> {
-    return this.call<string | null>("state_getStorage", [key]);
+  async getStorage(key: string, atHash?: string): Promise<string | null> {
+    return this.call<string | null>("state_getStorage", atHash ? [key, atHash] : [key]);
   }
 
   close() {

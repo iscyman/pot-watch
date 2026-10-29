@@ -59,3 +59,21 @@ test("shares sum to 100% and ignore out-of-range authors", () => {
   const s = v.summarize(VS);
   assert.equal(s[0].sharePct + s[1].sharePct, 100);
 });
+
+test("SecurityMonitor.hhi: duopoly ≈ 0.5, monopoly = 1", async () => {
+  const { SecurityMonitor } = await import("../src/security.js");
+  assert.equal(SecurityMonitor.hhi([50, 50]), 0.5);
+  assert.equal(SecurityMonitor.hhi([100]), 1);
+  assert.ok(Math.abs(SecurityMonitor.hhi([49.93, 49.93, 0.07, 0.05, 0]) - 0.4986) < 0.001);
+});
+
+test("validator churn detects joins and leaves", async () => {
+  const { SecurityMonitor } = await import("../src/security.js");
+  const dir = (await import("node:fs")).mkdtempSync((await import("node:os")).tmpdir() + "/churn-");
+  const sec = new SecurityMonitor(null as any, () => null, dir);
+  sec.noteValidatorSet(1, ["A", "B"]);
+  const c = sec.noteValidatorSet(2, ["B", "C"]);
+  assert.deepEqual(c.joined, ["C"]);
+  assert.deepEqual(c.left, ["A"]);
+  (await import("node:fs")).rmSync(dir, { recursive: true, force: true });
+});

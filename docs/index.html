@@ -94,6 +94,24 @@
     </div>
   </div>
 
+  <!-- Security analytics (Package 08) -->
+  <div class="card" style="margin-bottom:13px">
+    <h3>🔐 Security Analytics <span class="tag" id="secTag">loading…</span></h3>
+    <div class="kpis" style="padding:12px 16px 0;margin-bottom:6px">
+      <div class="kpi"><div class="lbl">Stake HHI</div><div class="val mono" id="secHhi">—</div><div class="sub">concentration over active stake</div></div>
+      <div class="kpi"><div class="lbl">Bonded Accounts</div><div class="val mono" id="secBonded">—</div><div class="sub">Staking.Ledger · live</div></div>
+      <div class="kpi"><div class="lbl">Slashes (scan)</div><div class="val mono" id="secSlash">0</div><div class="sub" id="secSlashSub">awaiting scan</div></div>
+      <div class="kpi"><div class="lbl">Max Transfer (scan)</div><div class="val mono" id="secXfer">0</div><div class="sub" id="secXferSub">awaiting scan</div></div>
+    </div>
+    <div style="padding:4px 16px 16px">
+      <table>
+        <thead><tr><th>Bonded account</th><th>Active stake</th><th>Share</th><th>Role</th></tr></thead>
+        <tbody id="secRows"><tr><td colspan="4" style="color:var(--dim);padding:12px">decoding staking storage via metadata walker…</td></tr></tbody>
+      </table>
+      <div class="hm" id="secFeed" style="padding:8px 0 0"></div>
+    </div>
+  </div>
+
   <!-- Evidence -->
   <div class="card" style="margin-bottom:13px">
     <h3>🧾 Verified Testnet Deployment <span class="tag">from contracts/deployment.json</span></h3>

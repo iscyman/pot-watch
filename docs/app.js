@@ -10,6 +10,7 @@ import {
   storageKey, hexToBytes, decU32, decU64, decU128, decVecAccountId, decCompact,
   abbreviate, formatPot,
 } from './twox.js';
+import { SEC, initSecurity, refreshStakes, scanBlocks, renderSecurity } from './security.js';
 
 // ---------------- config ----------------
 export const CFG = {
@@ -272,6 +273,18 @@ export async function tickBlocks() {
   } catch (e) { S.subOk = false; }
 }
 
+let secTick = 0;
+export async function tickSecurityNow() {
+  if (!SEC.ready) return;
+  try {
+    secTick++;
+    if (secTick % 4 === 1) await refreshStakes(rpc, CFG);
+    const to = S.best;
+    const from = SEC.scanTo || Math.max(0, to - 20);
+    if (to > from) await scanBlocks(rpc, CFG, from, Math.min(to, from + 4));
+  } catch (e) { /* security panel must never kill the dashboard */ }
+}
+
 export async function tickSlow() {
   try {
     const st = await readChainState();
@@ -288,6 +301,7 @@ export async function tickSlow() {
     S.subOk = true;
   } catch (e) { S.subOk = false; }
   try { S.contract = await readContract(); S.evmOk = true; } catch (e) { S.evmOk = false; }
+  await tickSecurityNow();
 }
 
 export async function loadEvidence() {
@@ -503,13 +517,14 @@ function renderAll() {
   const h = health();
   renderKpis(h); renderBlocks(); renderValidators(h);
   renderContract(); renderEvents(); renderHealth(h); renderEvidence();
+  renderSecurity(S);
 }
 
 export function start() {
   onBlock = () => { /* live flash handled by render tick */ };
   (async () => {
     $('boot').textContent = 'connecting to testnet…';
-    await Promise.all([bootstrap(), loadEvidence()]);
+    await Promise.all([bootstrap(), loadEvidence(), initSecurity(rpc, CFG)]);
     $('boot').textContent = '';
     await tickSlow();
     renderAll();

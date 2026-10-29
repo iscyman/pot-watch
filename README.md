@@ -19,7 +19,8 @@ Built for the **Portaldot Hacker House 2026** · *Node Operations & Tooling* tra
 - **Watcher engine** (`watcher/`) — TypeScript, zero heavy dependencies. Streams live blocks, tracks eras/sessions, decodes BABE authorship, computes per-validator uptime and a composite **network health score** (finality 25% · availability 30% · block time 20% · decentralization 15% · security 10%), and fires alerts to Discord/Telegram. Runs against **mainnet and testnet** (`npm start -- --testnet`).
 - **Autonomous on-chain alert loop** (`watcher/src/loop.ts`, `evm.ts`, `firer.ts`) — the watcher reads its own subscriptions from the deployed AlertRegistry, evaluates them against live chain state, and records every fire back on-chain via `recordFire` on the **native surface (~0.015 tPOT)**. Detection → on-chain receipt → channel delivery with no human in the circuit; `fireCount`/`AlertFired` on-chain are the tamper-evident ledger. First receipt: block **206608**, tx `0x722b270c…99039ddf`.
 - **AlertRegistry contract** (`contracts/`) — Solidity 0.8.24, deployed live on the Portaldot V3 testnet. On-chain alert subscriptions: kinds (validator uptime, era rotation, slash events, large transfers), channels, thresholds, permissionless `recordFire` with per-block cooldown, and per-alert fire statistics. 6/6 unit tests; verified interactions and decoded events on-chain.
-- **Dashboard** (`docs/`) — the live site above. **Backend-free and dependency-free**: your browser talks directly to the Substrate JSON-RPC and the EVM JSON-RPC (raw `fetch`, hand-rolled SCALE/twox128/ss58/BABE decoding, one vendored MIT blake2b). Shows the live block stream, era/session state, validator activity, health score, and the contract's on-chain alerts + decoded events.
+- **Security analytics** (`watcher/src/walker.ts`, `events.ts`, `security.ts` + dashboard mirror) — a zero-dependency FRAME-metadata walker decodes **any** storage value or event by chain type: live stake concentration (Staking.Ledger → Herfindahl index), validator churn per session, slash-event feed, and large-transfer scan. The slash/transfer scanners feed the autonomous loop's `SlashEvent` / `LargeTransfer` kinds with real chain data.
+- **Dashboard** (`docs/`) — the live site above. **Backend-free and dependency-free**: your browser talks directly to the Substrate JSON-RPC and the EVM JSON-RPC (raw `fetch`, hand-rolled SCALE/twox128/ss58/BABE decoding, one vendored MIT blake2b). Shows the live block stream, era/session state, validator activity, health score, the contract's on-chain alerts + decoded events, and the **security analytics panel** (stake HHI, bonded table, slash/transfer scan).
 
 ## Notable: Portaldot's dual fee model 🔎
 
@@ -33,7 +34,7 @@ Deploying the same contract costs **~289 tPOT via the EVM/MetaMask surface** but
 ```bash
 # watcher — live network monitoring + autonomous on-chain alert loop
 cd watcher && npm install && npm run selfcheck   # 9/9 primitive checks
-npm test                                         # 43 unit tests (49 repo-wide)
+npm test                                         # 59 unit tests (65 repo-wide)
 npm start                                        # mainnet
 npm start -- --testnet                           # V3 testnet + alert loop (dry-run by default)
 

@@ -175,3 +175,19 @@ export function formatPot(raw, dp = 2) {
   const frac = (raw % 10n ** 14n).toString().padStart(14, '0').slice(0, dp);
   return `${whole.toString()}.${frac}`;
 }
+
+/** ss58 address → 0x 32-byte pubkey hex (inverse of ss58(); port of watcher/src/twox.ts) */
+export function ss58ToHex(addr) {
+  let n = 0n;
+  for (const c of addr) {
+    const d = ALPHABET.indexOf(c);
+    if (d < 0) throw new Error('bad base58 char: ' + c);
+    n = n * 58n + BigInt(d);
+  }
+  const bytes = [];
+  while (n > 0n) { bytes.unshift(Number(n % 256n)); n /= 256n; }
+  for (const c of addr) { if (c !== '1') break; bytes.unshift(0); }
+  const pub = bytes.slice(1, 33);
+  if (pub.length !== 32) throw new Error('ss58 payload too short');
+  return '0x' + pub.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
